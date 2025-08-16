@@ -1,0 +1,96 @@
+// API Configuration
+const API_BASE_URL = 'http://localhost:3001/api';
+
+// API Client
+class ApiClient {
+  constructor(baseUrl = API_BASE_URL) {
+    this.baseUrl = baseUrl;
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseUrl}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    if (config.body && typeof config.body !== 'string') {
+      config.body = JSON.stringify(config.body);
+    }
+
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      
+      return await response.text();
+    } catch (error) {
+      console.error('API request failed:', error);
+      throw error;
+    }
+  }
+
+  // Product endpoints
+  async getProducts(filters = {}) {
+    const queryParams = new URLSearchParams();
+    
+    if (filters.articleNo) {
+      queryParams.append('articleNo', filters.articleNo);
+    }
+    if (filters.product) {
+      queryParams.append('product', filters.product);
+    }
+    if (filters.page) {
+      queryParams.append('page', filters.page);
+    }
+    if (filters.limit) {
+      queryParams.append('limit', filters.limit);
+    }
+    
+    const endpoint = `/products${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return this.request(endpoint);
+  }
+
+  async getProduct(id) {
+    return this.request(`/products/${id}`);
+  }
+
+  async createProduct(productData) {
+    return this.request('/products', {
+      method: 'POST',
+      body: productData,
+    });
+  }
+
+  async updateProduct(id, productData) {
+    return this.request(`/products/${id}`, {
+      method: 'PUT',
+      body: productData,
+    });
+  }
+
+  async updateProductField(id, field, value) {
+    return this.request(`/products/${id}`, {
+      method: 'PATCH',
+      body: { [field]: value },
+    });
+  }
+
+  async deleteProduct(id) {
+    return this.request(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+}
+
+export default new ApiClient();
