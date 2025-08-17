@@ -66,7 +66,7 @@ async function productRoutes(fastify, options) {
   // Create new product
   fastify.post('/products', async (request, reply) => {
     try {
-      const { articleNo, product, price, inStock, unit } = request.body;
+      const { articleNo, product, price, inStock, unit, inPrice, description } = request.body;
       
       if (!articleNo || !product) {
         return reply.status(400).send({ error: 'Article number and product name are required' });
@@ -77,7 +77,9 @@ async function productRoutes(fastify, options) {
         product,
         price: price || 0,
         inStock: inStock || 0,
-        unit: unit || 'pieces'
+        unit: unit || 'pieces',
+        inPrice: inPrice || 0,
+        description: description || null
       });
       
       reply.status(201).send({ product: newProduct });
@@ -91,7 +93,7 @@ async function productRoutes(fastify, options) {
   fastify.put('/products/:id', async (request, reply) => {
     try {
       const { id } = request.params;
-      const { articleNo, product, price, inStock, unit } = request.body;
+      const { articleNo, product, price, inStock, unit, inPrice, description } = request.body;
       
       const existingProduct = await Product.findByPk(id);
       
@@ -104,7 +106,9 @@ async function productRoutes(fastify, options) {
         product: product !== undefined ? product : existingProduct.product,
         price: price !== undefined ? price : existingProduct.price,
         inStock: inStock !== undefined ? inStock : existingProduct.inStock,
-        unit: unit !== undefined ? unit : existingProduct.unit
+        unit: unit !== undefined ? unit : existingProduct.unit,
+        inPrice: inPrice !== undefined ? inPrice : existingProduct.inPrice,
+        description: description !== undefined ? description : existingProduct.description
       });
       
       return { product: updatedProduct };

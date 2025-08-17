@@ -5,13 +5,8 @@ import apiClient from './api.js'
 const app = {
   data: [],
   filteredData: [],
-  selectedRowId: null,
   loading: false,
-  error: null,
-  searchFilters: {
-    articleNo: '',
-    product: ''
-  }
+  error: null
 };
 
 // Initialize the application
@@ -20,12 +15,9 @@ async function init() {
   try {
     app.loading = true;
     app.error = null;
-    console.log('Setting loading state...');
     renderApp(); // Show loading state
     
-    console.log('About to load products...');
     await loadProducts();
-    console.log('Products loaded, rendering app...');
     app.loading = false;
     renderApp(); // Re-render with data
     setupEventListeners();
@@ -42,11 +34,8 @@ async function init() {
 async function loadProducts() {
   try {
     console.log('Starting to load products...');
-    console.log('Search filters:', app.searchFilters);
     
     const response = await apiClient.getProducts({
-      articleNo: app.searchFilters.articleNo,
-      product: app.searchFilters.product,
       limit: 50
     });
     
@@ -69,9 +58,8 @@ function renderApp() {
   
   if (app.loading) {
     appElement.innerHTML = `
-      ${renderHeader()}
-      <div style="text-align: center; padding: 2rem;">
-        <div>Loading products...</div>
+      <div class="loading">
+        Loading products...
       </div>
     `;
     return;
@@ -79,10 +67,9 @@ function renderApp() {
   
   if (app.error) {
     appElement.innerHTML = `
-      ${renderHeader()}
-      <div style="text-align: center; padding: 2rem; color: red;">
+      <div style="text-align: center; padding: 2rem; color: #dc3545;">
         <div>${app.error}</div>
-        <button onclick="location.reload()" style="margin-top: 1rem; padding: 0.5rem 1rem;">
+        <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 1rem;">
           Retry
         </button>
       </div>
@@ -90,70 +77,7 @@ function renderApp() {
     return;
   }
   
-  appElement.innerHTML = `
-    ${renderHeader()}
-    ${renderSearchSection()}
-    ${renderTable()}
-  `;
-}
-
-// Render header component
-function renderHeader() {
-  return `
-    <header class="header">
-      <div class="header-container">
-        <button class="hamburger-menu">☰</button>
-        <div class="language-toggle">
-          <span>English</span>
-          <span class="flag">🇬🇧</span>
-        </div>
-      </div>
-    </header>
-  `;
-}
-
-// Render search section
-function renderSearchSection() {
-  return `
-    <section class="search-section">
-      <div class="search-container">
-        <div class="search-row">
-          <div class="search-field">
-            <input 
-              type="text" 
-              placeholder="Search Article No ..." 
-              id="search-article"
-              value="${app.searchFilters.articleNo}"
-            >
-            <span class="search-icon">🔍</span>
-          </div>
-          <div class="search-field">
-            <input 
-              type="text" 
-              placeholder="Search Product ..." 
-              id="search-product"
-              value="${app.searchFilters.product}"
-            >
-            <span class="search-icon">🔍</span>
-          </div>
-        </div>
-        <div class="action-buttons">
-          <button class="btn btn-primary">
-            <span>+</span>
-            Add New
-          </button>
-          <button class="btn btn-secondary">
-            <span>💾</span>
-            Import
-          </button>
-          <button class="btn btn-info">
-            <span>📊</span>
-            Export
-          </button>
-        </div>
-      </div>
-    </section>
-  `;
+  appElement.innerHTML = renderTable();
 }
 
 // Render table component
@@ -163,12 +87,14 @@ function renderTable() {
       <table class="data-table">
         <thead>
           <tr>
-            <th>Article No.</th>
-            <th>Product/Service</th>
-            <th class="hide-mobile">Price</th>
-            <th class="hide-tablet">In Stock</th>
-            <th class="hide-mobile-portrait">Unit</th>
-            <th></th>
+            <th class="hide-mobile-landscape">Article No.<i class="fa-solid fa-arrow-down" style="color: #63E6BE; margin-left: 4px;"></i></th>
+            <th>Product/Service <i class="fa-solid fa-arrow-down" style="color: #74C0FC; margin-left: 4px;"></i></th>
+            <th class="hide-tablet">In Price</th>
+            <th>Price</th>
+            <th class="hide-mobile-landscape">Unit</th>
+            <th class="hide-mobile-landscape">In Stock</th>
+            <th class="hide-tablet">Description</th>
+            <th class="actions-column"></th>
           </tr>
         </thead>
         <tbody>
@@ -181,10 +107,9 @@ function renderTable() {
 
 // Render individual table row
 function renderTableRow(item) {
-  const isSelected = item.id === app.selectedRowId;
   return `
-    <tr class="${isSelected ? 'selected' : ''}" data-id="${item.id}">
-      <td>
+    <tr data-id="${item.id}">
+      <td class="hide-mobile-landscape">
         <input 
           type="text" 
           class="editable-field article-no" 
@@ -202,25 +127,25 @@ function renderTableRow(item) {
           data-id="${item.id}"
         >
       </td>
-      <td class="hide-mobile">
-        <input 
-          type="number" 
-          class="editable-field price-field" 
-          value="${item.price}"
-          data-field="price"
-          data-id="${item.id}"
-        >
-      </td>
       <td class="hide-tablet">
         <input 
           type="number" 
           class="editable-field price-field" 
-          value="${item.inStock}"
-          data-field="inStock"
+          value="${item.inPrice ? Math.round(item.inPrice) : ''}"
+          data-field="inPrice"
           data-id="${item.id}"
         >
       </td>
-      <td class="hide-mobile-portrait">
+      <td>
+        <input 
+          type="number" 
+          class="editable-field price-field" 
+          value="${item.price ? Math.round(item.price) : ''}"
+          data-field="price"
+          data-id="${item.id}"
+        >
+      </td>
+      <td class="hide-mobile-landscape">
         <input 
           type="text" 
           class="editable-field unit-field" 
@@ -229,47 +154,35 @@ function renderTableRow(item) {
           data-id="${item.id}"
         >
       </td>
+      <td class="hide-mobile-landscape">
+        <input 
+          type="number" 
+          class="editable-field price-field" 
+          value="${item.inStock ? Math.round(item.inStock) : ''}"
+          data-field="inStock"
+          data-id="${item.id}"
+        >
+      </td>
+      <td class="hide-tablet">
+        <input 
+          type="text" 
+          class="editable-field" 
+          value="${item.description || ''}"
+          data-field="description"
+          data-id="${item.id}"
+        >
+      </td>
       <td class="actions-cell">
-        <button class="menu-dots" data-id="${item.id}">⋯</button>
+        <button class="row-actions-btn" data-id="${item.id}">
+          <i class="fas fa-ellipsis-h" style="color: #16cde5;"></i>
+        </button>
       </td>
     </tr>
   `;
 }
 
-// Setup event listeners
+// Setup event listeners - only for field changes
 function setupEventListeners() {
-  // Search functionality with debouncing
-  let searchTimeout;
-  const searchArticle = document.getElementById('search-article');
-  const searchProduct = document.getElementById('search-product');
-  
-  const debouncedSearch = () => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(handleSearch, 500); // 500ms delay
-  };
-  
-  if (searchArticle) {
-    searchArticle.addEventListener('input', debouncedSearch);
-  }
-  
-  if (searchProduct) {
-    searchProduct.addEventListener('input', debouncedSearch);
-  }
-
-  // Row selection
-  document.addEventListener('click', (e) => {
-    const row = e.target.closest('tr[data-id]');
-    if (row && !e.target.classList.contains('editable-field') && !e.target.classList.contains('menu-dots')) {
-      const rowId = parseInt(row.dataset.id);
-      if (app.selectedRowId === rowId) {
-        app.selectedRowId = null;
-      } else {
-        app.selectedRowId = rowId;
-      }
-      updateTableRows();
-    }
-  });
-
   // Editable fields
   document.addEventListener('change', (e) => {
     if (e.target.classList.contains('editable-field')) {
@@ -277,93 +190,65 @@ function setupEventListeners() {
     }
   });
 
-  // Menu dots (placeholder for now)
-  document.addEventListener('click', (e) => {
-    if (e.target.classList.contains('menu-dots')) {
-      e.stopPropagation();
-      const id = parseInt(e.target.dataset.id);
-      console.log('Menu clicked for item:', id);
-      // TODO: Implement dropdown menu
+  // Focus and blur events for row highlighting
+  document.addEventListener('focus', (e) => {
+    if (e.target.classList.contains('editable-field')) {
+      highlightRow(e.target, true);
     }
-  });
+  }, true);
 
-  // Action buttons
-  document.addEventListener('click', async (e) => {
-    if (e.target.closest('.btn-primary')) {
-      // Add New button
-      await handleAddNew();
-    } else if (e.target.closest('.btn-secondary')) {
-      // Import button
-      console.log('Import clicked');
-      // TODO: Implement import functionality
-    } else if (e.target.closest('.btn-info')) {
-      // Export button
-      console.log('Export clicked');
-      // TODO: Implement export functionality
+  document.addEventListener('blur', (e) => {
+    if (e.target.classList.contains('editable-field')) {
+      highlightRow(e.target, false);
     }
-  });
+  }, true);
 }
 
-// Handle add new product
-async function handleAddNew() {
-  try {
-    const newProduct = {
-      articleNo: `NEW${Date.now()}`,
-      product: 'New Product',
-      price: 0,
-      inStock: 0,
-      unit: 'pieces'
-    };
+// Highlight row when any field is focused
+function highlightRow(input, isFocused) {
+  const row = input.closest('tr');
+  if (!row) return;
+
+  if (isFocused) {
+    // Add focused class to row
+    row.classList.add('row-focused');
     
-    const response = await apiClient.createProduct(newProduct);
-    
-    if (response && response.product) {
-      // Reload products to get the new one
-      await loadProducts();
-      updateTable();
+    // Add right arrow indicator on the left side
+    if (!row.querySelector('.row-focus-arrow')) {
+      const arrow = document.createElement('div');
+      arrow.className = 'row-focus-arrow';
+      arrow.innerHTML = '<i class="fas fa-arrow-right"></i>';
+      arrow.style.cssText = `
+        position: absolute;
+        left: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #74C0FC;
+        font-size: 12px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        justify-content: center;
+      `;
       
-      // Select the new product
-      app.selectedRowId = response.product.id;
-      updateTableRows();
+      // Make sure the row container is positioned relatively
+      row.style.position = 'relative';
+      row.appendChild(arrow);
     }
-  } catch (error) {
-    console.error('Failed to create new product:', error);
-    alert('Failed to create new product. Please try again.');
-  }
-}
-
-// Handle search functionality
-async function handleSearch() {
-  const searchArticle = document.getElementById('search-article');
-  const searchProduct = document.getElementById('search-product');
-  
-  app.searchFilters.articleNo = searchArticle ? searchArticle.value : '';
-  app.searchFilters.product = searchProduct ? searchProduct.value : '';
-  
-  try {
-    app.loading = true;
-    updateLoadingState();
+  } else {
+    // Remove focused class from row
+    row.classList.remove('row-focused');
     
-    await loadProducts();
-    updateTable();
-  } catch (error) {
-    console.error('Search failed:', error);
-    app.error = 'Search failed. Please try again.';
-    renderApp();
-  } finally {
-    app.loading = false;
-  }
-}
-
-// Show loading state for table only
-function updateLoadingState() {
-  const tableContainer = document.querySelector('.table-container');
-  if (tableContainer) {
-    tableContainer.innerHTML = `
-      <div style="text-align: center; padding: 2rem;">
-        <div>Searching...</div>
-      </div>
-    `;
+    // Remove arrow indicator
+    const arrow = row.querySelector('.row-focus-arrow');
+    if (arrow) {
+      arrow.remove();
+    }
+    
+    // Reset position if no other arrows in row
+    if (!row.querySelector('.row-focus-arrow')) {
+      row.style.position = '';
+    }
   }
 }
 
@@ -389,7 +274,7 @@ async function handleFieldChange(e) {
     await apiClient.updateProductField(id, field, value);
     console.log(`Updated ${field} for item ${id}:`, value);
     
-    // Show success feedback (optional)
+    // Show success feedback
     showSuccessFeedback(e.target);
     
   } catch (error) {
@@ -427,22 +312,7 @@ function showErrorFeedback(element, message) {
     element.style.borderColor = '';
   }, 2000);
   
-  // Could also show a toast notification here
   console.error(message);
-}
-
-// Placeholder for backend save functionality
-async function saveToBackend(id, field, value) {
-  // This function is no longer needed as we use apiClient.updateProductField directly
-  console.log('saveToBackend is deprecated, using apiClient.updateProductField instead');
-}
-
-// Update only table rows (for selection changes)
-function updateTableRows() {
-  const tbody = document.querySelector('.data-table tbody');
-  if (tbody) {
-    tbody.innerHTML = app.filteredData.map(item => renderTableRow(item)).join('');
-  }
 }
 
 // Update entire table (for data changes)

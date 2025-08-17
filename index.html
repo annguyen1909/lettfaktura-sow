@@ -1,13 +1,115 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pricelist - Lettfaktura SOW</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <title>Lettfaktura SOW - Pricelist Management</title>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <div class="user-info">
+      <div class="avatar">👤</div>
+      <div class="user-details">
+        <div class="user-name">An Nguyen</div>
+        <div class="company-name">Lettfaktura</div>
+      </div>
+    </div>
+    <div class="language-selector">
+      <span>English</span>
+      <span class="flag">🇬🇧</span>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <h3 class="menu-title">Menu</h3>
+      <nav class="menu">
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-file-invoice" style="color: #74C0FC;"></i></span>
+          <span class="menu-text">Invoices</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-user" style="color: #63E6BE;"></i></span>
+          <span class="menu-text">Customers</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-gear" style="color: #74C0FC;"></i></span>
+          <span class="menu-text">My Business</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-book" style="color:#74C0FC"></i></span>
+          <span class="menu-text">Invoice Journal</span>
+        </a>
+        <a href="#" class="menu-item active">
+          <span class="menu-icon"><i class="fa-solid fa-tags" style="color: #FFA500;"></i></span>
+          <span class="menu-text">Price List</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-newspaper" style="color: #74C0FC;"></i></span>
+          <span class="menu-text">Multiple Invoicing</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-circle-xmark" style="color: #ff3333;"></i></span>
+          <span class="menu-text">Unpaid Invoices</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-comments-dollar" style="color: #FFD43B;"></i></span>
+          <span class="menu-text">Offer</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-warehouse" style="color: #74C0FC;"></i></span>
+          <span class="menu-text">Inventory Control</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-address-card" style="color: #168be5;"></i></span>
+          <span class="menu-text">Member Invoicing</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-cloud-arrow-up" style="color: #3a77c0;"></i></span>
+          <span class="menu-text">Import/Export</span>
+        </a>
+        <a href="#" class="menu-item">
+          <span class="menu-icon"><i class="fa-solid fa-arrow-right-from-bracket" style="color: #63E6BE;"></i></span>
+          <span class="menu-text">Log out</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="content-header">
+        <div class="search-section">
+          <div class="search-group">
+            <input type="text" id="searchArticle" placeholder="Search Article No..." class="search-input">
+            <button class="search-btn"><i class="fas fa-search" style="color: #16cde5;"></i></button>
+          </div>
+          <div class="search-group">
+            <input type="text" id="searchProduct" placeholder="Search Product..." class="search-input">
+            <button class="search-btn"><i class="fas fa-search" style="color: #16cde5;"></i></button>
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn-new"><span class="btn-text">New Product</span><i class="fa-solid fa-circle-plus" style="color: #63E6BE;"></i></button>
+          <button class="btn btn-print"><span class="btn-text">Print List</span><i class="fa-solid fa-print" style="color: #74C0FC;"></i></button>
+          <button class="btn btn-advanced"><span class="btn-text">Advanced mode</span><i class="fa-solid fa-cog" style="color: #FFA500;"></i></button>
+        </div>
+      </div>
+      
+      <div id="app">
+        <!-- Product table will be rendered here -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Overlay for mobile sidebar -->
+  <div class="overlay" id="overlay"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
 </html>

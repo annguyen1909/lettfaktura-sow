@@ -17,7 +17,7 @@ const Product = sequelize.define('Product', {
     allowNull: false
   },
   price: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
   },
@@ -31,6 +31,16 @@ const Product = sequelize.define('Product', {
     type: DataTypes.STRING(50),
     allowNull: false,
     defaultValue: 'pieces'
+  },
+  inPrice: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'in_price'
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   tableName: 'products',
