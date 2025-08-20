@@ -16,7 +16,9 @@ const fastify = Fastify({
 
 // Register CORS
 await fastify.register(cors, {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+  origin: process.env.NODE_ENV === 'production' 
+    ? true  // Allow all origins in production (since it's same domain)
+    : (process.env.FRONTEND_URL || 'http://localhost:5174'),
   credentials: true
 });
 
@@ -58,14 +60,16 @@ const start = async () => {
     // Initialize database first
     await initializeDatabase();
     
-    // Start the server
-    const port = process.env.PORT || 3001;
-    const host = process.env.HOST || '0.0.0.0';
-    
-    await fastify.listen({ port, host });
-    console.log(`Server is running on http://${host}:${port}`);
-    console.log(`Health check: http://${host}:${port}/health`);
-    console.log(`API endpoints: http://${host}:${port}/api/products`);
+    // Start the server only in development
+    if (process.env.NODE_ENV !== 'production') {
+      const port = process.env.PORT || 3001;
+      const host = process.env.HOST || '0.0.0.0';
+      
+      await fastify.listen({ port, host });
+      console.log(`Server is running on http://${host}:${port}`);
+      console.log(`Health check: http://${host}:${port}/health`);
+      console.log(`API endpoints: http://${host}:${port}/api/products`);
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
@@ -87,4 +91,13 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-start();
+// Initialize database on import
+await initializeDatabase();
+
+// Start server only in development
+if (process.env.NODE_ENV !== 'production') {
+  start();
+}
+
+// Export for Vercel
+export default fastify;

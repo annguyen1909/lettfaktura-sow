@@ -1,5 +1,7 @@
 // API Configuration
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.PROD 
+  ? '/api'  // Use relative path in production (Vercel will route to backend)
+  : 'http://localhost:3001/api';  // Use full URL in development
 
 // API Client
 class ApiClient {
