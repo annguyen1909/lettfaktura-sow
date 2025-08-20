@@ -18,7 +18,7 @@ async function getProducts(client, filters = {}) {
   const conditions = [];
 
   if (filters.articleNo) {
-    conditions.push(`"articleNo" ILIKE $${params.length + 1}`);
+    conditions.push(`article_no ILIKE $${params.length + 1}`);
     params.push(`%${filters.articleNo}%`);
   }
 
@@ -44,12 +44,25 @@ async function getProducts(client, filters = {}) {
   }
 
   const result = await client.query(query, params);
-  return result.rows;
+  
+  // Convert snake_case to camelCase for frontend compatibility
+  return result.rows.map(row => ({
+    id: row.id,
+    articleNo: row.article_no,
+    product: row.product,
+    inPrice: parseFloat(row.in_price || 0),
+    price: parseFloat(row.price || 0),
+    unit: row.unit,
+    inStock: parseInt(row.in_stock || 0),
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  }));
 }
 
 async function createProduct(client, productData) {
   const query = `
-    INSERT INTO products ("articleNo", product, "inPrice", price, unit, "inStock", description)
+    INSERT INTO products (article_no, product, in_price, price, unit, in_stock, description)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
   `;
@@ -65,7 +78,21 @@ async function createProduct(client, productData) {
   ];
 
   const result = await client.query(query, values);
-  return result.rows[0];
+  const row = result.rows[0];
+  
+  // Convert snake_case to camelCase for frontend compatibility
+  return {
+    id: row.id,
+    articleNo: row.article_no,
+    product: row.product,
+    inPrice: parseFloat(row.in_price || 0),
+    price: parseFloat(row.price || 0),
+    unit: row.unit,
+    inStock: parseInt(row.in_stock || 0),
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 async function updateProduct(client, id, updateData) {
@@ -73,9 +100,20 @@ async function updateProduct(client, id, updateData) {
   const values = [];
   let paramCount = 1;
 
+  // Map camelCase to snake_case for database columns
+  const fieldMapping = {
+    articleNo: 'article_no',
+    product: 'product',
+    inPrice: 'in_price',
+    price: 'price',
+    unit: 'unit',
+    inStock: 'in_stock',
+    description: 'description'
+  };
+
   Object.keys(updateData).forEach(key => {
-    if (updateData[key] !== undefined) {
-      fields.push(`"${key}" = $${paramCount}`);
+    if (updateData[key] !== undefined && fieldMapping[key]) {
+      fields.push(`${fieldMapping[key]} = $${paramCount}`);
       values.push(updateData[key]);
       paramCount++;
     }
@@ -99,7 +137,21 @@ async function updateProduct(client, id, updateData) {
     throw new Error('Product not found');
   }
   
-  return result.rows[0];
+  const row = result.rows[0];
+  
+  // Convert snake_case to camelCase for frontend compatibility
+  return {
+    id: row.id,
+    articleNo: row.article_no,
+    product: row.product,
+    inPrice: parseFloat(row.in_price || 0),
+    price: parseFloat(row.price || 0),
+    unit: row.unit,
+    inStock: parseInt(row.in_stock || 0),
+    description: row.description,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
 }
 
 export default async function handler(req, res) {
@@ -143,7 +195,7 @@ export default async function handler(req, res) {
       const countConditions = [];
 
       if (articleNo) {
-        countConditions.push(`"articleNo" ILIKE $${countParams.length + 1}`);
+        countConditions.push(`article_no ILIKE $${countParams.length + 1}`);
         countParams.push(`%${articleNo}%`);
       }
 
