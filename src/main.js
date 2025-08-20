@@ -202,6 +202,15 @@ function setupEventListeners() {
       highlightRow(e.target, false);
     }
   }, true);
+
+  // Disable "New Product" button functionality (keep it visible but non-functional)
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.btn-new')) {
+      e.preventDefault();
+      console.log('New Product button clicked (disabled for this demo)');
+      // Button is visible but does nothing
+    }
+  });
 }
 
 // Highlight row when any field is focused
