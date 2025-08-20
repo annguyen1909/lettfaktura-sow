@@ -1,16 +1,19 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api'  // Use relative path in production (Vercel will route to backend)
-  : 'http://localhost:3001/api';  // Use full URL in development
+const API_BASE_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3001/api'  // Use full URL in development
+  : '/api';  // Use relative path in production (Vercel will route to backend)
 
 // API Client
 class ApiClient {
   constructor(baseUrl = API_BASE_URL) {
     this.baseUrl = baseUrl;
+    console.log('API Base URL:', this.baseUrl);
+    console.log('Current hostname:', window.location.hostname);
   }
 
   async request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`;
+    console.log('Making request to:', url);
     const config = {
       headers: {
         'Content-Type': 'application/json',
