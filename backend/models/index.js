@@ -6,8 +6,5 @@ const models = {
   Product
 };
 
-// Define associations here if needed
-// Example: Product.hasMany(Category);
-
 export { sequelize, Product };
 export default models;
