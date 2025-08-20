@@ -110,97 +110,44 @@ export default async function handler(req, res) {
     return;
   }
 
+  // For now, return mock data to test the endpoint
   try {
-    await initializeDatabase();
+    const mockProducts = [
+      {
+        id: 1,
+        articleNo: "ART001",
+        product: "Sample Product 1",
+        inPrice: 10.00,
+        price: 15.00,
+        unit: "pcs",
+        inStock: 100,
+        description: "This is a sample product"
+      },
+      {
+        id: 2,
+        articleNo: "ART002", 
+        product: "Sample Product 2",
+        inPrice: 20.00,
+        price: 30.00,
+        unit: "pcs",
+        inStock: 50,
+        description: "This is another sample product"
+      }
+    ];
 
-    const { method, query, body } = req;
-    const { limit = 50, offset = 0, search } = query;
-
-    switch (method) {
-      case 'GET':
-        try {
-          const whereClause = {};
-          
-          if (search) {
-            whereClause[Op.or] = [
-              { product: { [Op.iLike]: `%${search}%` } },
-              { articleNo: { [Op.iLike]: `%${search}%` } }
-            ];
-          }
-
-          const { count, rows } = await Product.findAndCountAll({
-            where: whereClause,
-            limit: parseInt(limit),
-            offset: parseInt(offset),
-            order: [['id', 'ASC']]
-          });
-
-          res.status(200).json({
-            products: rows,
-            pagination: {
-              total: count,
-              limit: parseInt(limit),
-              offset: parseInt(offset),
-              pages: Math.ceil(count / limit)
-            }
-          });
-        } catch (error) {
-          console.error('GET products error:', error);
-          res.status(500).json({ error: 'Failed to fetch products' });
+    if (req.method === 'GET') {
+      res.status(200).json({
+        products: mockProducts,
+        pagination: {
+          total: mockProducts.length,
+          limit: 50,
+          offset: 0,
+          pages: 1
         }
-        break;
-
-      case 'POST':
-        try {
-          const product = await Product.create(body);
-          res.status(201).json(product);
-        } catch (error) {
-          console.error('POST product error:', error);
-          res.status(400).json({ error: 'Failed to create product' });
-        }
-        break;
-
-      case 'PUT':
-        try {
-          const { id } = query;
-          const [updatedRowsCount] = await Product.update(body, {
-            where: { id },
-            returning: true
-          });
-          
-          if (updatedRowsCount === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-          }
-          
-          const updatedProduct = await Product.findByPk(id);
-          res.status(200).json(updatedProduct);
-        } catch (error) {
-          console.error('PUT product error:', error);
-          res.status(400).json({ error: 'Failed to update product' });
-        }
-        break;
-
-      case 'DELETE':
-        try {
-          const { id } = query;
-          const deletedRowsCount = await Product.destroy({
-            where: { id }
-          });
-          
-          if (deletedRowsCount === 0) {
-            return res.status(404).json({ error: 'Product not found' });
-          }
-          
-          res.status(204).end();
-        } catch (error) {
-          console.error('DELETE product error:', error);
-          res.status(400).json({ error: 'Failed to delete product' });
-        }
-        break;
-
-      default:
-        res.setHeader('Allow', ['GET', 'POST', 'PUT', 'DELETE']);
-        res.status(405).end(`Method ${method} Not Allowed`);
+      });
+    } else {
+      res.setHeader('Allow', ['GET']);
+      res.status(405).json({ error: `Method ${req.method} Not Allowed` });
     }
   } catch (error) {
     console.error('API error:', error);
