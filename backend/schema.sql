@@ -66,21 +66,3 @@ INSERT INTO products (article_no, product, price, in_stock, unit, in_price, desc
 ('1234567911', 'Bluetooth Speaker Waterproof', 79, 110, 'pieces', 58, 'Portable waterproof speaker with excellent sound quality')
 ON CONFLICT DO NOTHING;
 
--- Grant necessary permissions (if using RLS)
--- ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-
--- Example RLS policy for read access (uncomment if needed)
--- CREATE POLICY "Allow read access to products" ON products
---     FOR SELECT USING (true);
-
--- Example RLS policy for write access (uncomment if needed)
--- CREATE POLICY "Allow insert access to products" ON products
---     FOR INSERT WITH CHECK (true);
-
--- Example RLS policy for update access (uncomment if needed)
--- CREATE POLICY "Allow update access to products" ON products
---     FOR UPDATE USING (true) WITH CHECK (true);
-
--- Example RLS policy for delete access (uncomment if needed)
--- CREATE POLICY "Allow delete access to products" ON products
---     FOR DELETE USING (true);
