@@ -1,13 +1,69 @@
-import { createClient } from '@supabase/supabase-js';
+// Import your existing backend logic
+import { Sequelize, DataTypes, Op } from 'sequelize';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+// Use the same database configuration as your backend
+const sequelize = new Sequelize(
+  process.env.DATABASE_URL || {
+    database: process.env.DB_NAME || 'postgres',
+    username: process.env.DB_USER || 'postgres', 
+    password: process.env.DB_PASSWORD,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
+    dialectOptions: {
+      ssl: process.env.NODE_ENV === 'production' ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false
+    },
+    logging: false
+  }
+);
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
-}
-
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Use the same Product model as your backend
+const Product = sequelize.define('Product', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  articleNo: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  product: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  inPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: 0
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  unit: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'pcs'
+  },
+  inStock: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    defaultValue: 0
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
+}, {
+  tableName: 'products',
+  timestamps: true
+});
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -22,171 +78,75 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Ensure database connection
+    await sequelize.authenticate();
+
     if (req.method === 'GET') {
-      // Get all products with optional search
+      // Use the same logic as your backend
       const { articleNo, product, page = 1, limit = 50 } = req.query;
       
-      let query = supabase
-        .from('products')
-        .select('*')
-        .order('id', { ascending: true });
+      const whereClause = {};
       
-      // Add search filters
       if (articleNo) {
-        query = query.ilike('articleNo', `%${articleNo}%`);
+        whereClause.articleNo = {
+          [Op.iLike]: `%${articleNo}%`
+        };
       }
       
       if (product) {
-        query = query.ilike('product', `%${product}%`);
+        whereClause.product = {
+          [Op.iLike]: `%${product}%`
+        };
       }
       
-      // Add pagination
       const offset = (page - 1) * limit;
-      query = query.range(offset, offset + limit - 1);
       
-      const { data, error, count } = await query;
-      
-      if (error) {
-        console.error('Database error:', error);
-        return res.status(500).json({
-          success: false,
-          error: 'Database error',
-          message: error.message
-        });
-      }
-      
-      res.status(200).json({
-        success: true,
-        products: data || [],
-        pagination: {
-          total: count || data?.length || 0,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil((count || data?.length || 0) / limit)
-        }
+      const { count, rows } = await Product.findAndCountAll({
+        where: whereClause,
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        order: [['id', 'ASC']]
       });
       
+      res.status(200).json({
+        products: rows,
+        pagination: {
+          total: count,
+          page: parseInt(page),
+          limit: parseInt(limit),
+          pages: Math.ceil(count / limit)
+        }
+      });
+
     } else if (req.method === 'POST') {
-      // Create new product
+      // Create new product using same logic
       const { articleNo, product, price, inStock, unit, inPrice, description } = req.body;
       
       if (!articleNo || !product) {
-        return res.status(400).json({
-          success: false,
-          error: 'Article number and product name are required'
-        });
+        return res.status(400).json({ error: 'Article number and product name are required' });
       }
       
-      const { data, error } = await supabase
-        .from('products')
-        .insert([{
-          articleNo,
-          product,
-          price: price || 0,
-          inStock: inStock || 0,
-          unit: unit || 'pcs',
-          inPrice: inPrice || 0,
-          description: description || null
-        }])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Database error:', error);
-        return res.status(500).json({
-          success: false,
-          error: 'Database error',
-          message: error.message
-        });
-      }
-      
-      res.status(201).json({
-        success: true,
-        product: data
+      const newProduct = await Product.create({
+        articleNo,
+        product,
+        price: price || 0,
+        inStock: inStock || 0,
+        unit: unit || 'pcs',
+        inPrice: inPrice || 0,
+        description: description || null
       });
       
-    } else if (req.method === 'PUT' || req.method === 'PATCH') {
-      // Update product
-      const urlParts = req.url.split('/');
-      const id = parseInt(urlParts[urlParts.length - 1]);
-      
-      if (!id || isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid product ID'
-        });
-      }
-      
-      const updateData = req.body;
-      
-      const { data, error } = await supabase
-        .from('products')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({
-            success: false,
-            error: 'Product not found'
-          });
-        }
-        
-        console.error('Database error:', error);
-        return res.status(500).json({
-          success: false,
-          error: 'Database error',
-          message: error.message
-        });
-      }
-      
-      res.status(200).json({
-        success: true,
-        product: data
-      });
-      
-    } else if (req.method === 'DELETE') {
-      // Delete product
-      const urlParts = req.url.split('/');
-      const id = parseInt(urlParts[urlParts.length - 1]);
-      
-      if (!id || isNaN(id)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid product ID'
-        });
-      }
-      
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Database error:', error);
-        return res.status(500).json({
-          success: false,
-          error: 'Database error',
-          message: error.message
-        });
-      }
-      
-      res.status(204).end();
-      
+      res.status(201).json({ product: newProduct });
+
     } else {
-      res.status(405).json({
-        success: false,
-        error: `Method ${req.method} not allowed`
-      });
+      res.status(405).json({ error: 'Method not allowed' });
     }
+
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({
-      success: false,
+    res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message
+      message: error.message 
     });
   }
 }
